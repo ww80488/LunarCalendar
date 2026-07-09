@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lunar Calendar">
+<meta name="theme-color" content="#b03a2e" id="themeColor">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" href="lunar.svg" type="image/svg+xml" sizes="512x512">
+<link rel="apple-touch-icon" href="lunar.svg" sizes="512x512">
+<link rel="manifest" href="manifest.json">
+<title>Lunar Calendar</title>
+<link rel="stylesheet" href="css/variables.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/bigtext.css">
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🌙 Lunar Calendar <small>Lunisolar Date Conversion &amp; Auspicious Day</small></h1>
+    <div class="top-actions">
+      <button onclick="toggleBigText()" title="Larger text" aria-label="Toggle larger text">Aa</button>
+      <button id="themeBtn" onclick="cycleTheme()" title="Theme: Light" aria-label="Cycle theme">☀️</button>
+    </div>
+  </div>
+  <div class="install-banner" id="installBanner">
+    <p>📲 Install <b>Lunar Calendar</b> for offline use and quick access!</p>
+    <button class="install-yes" id="installBtn">Install</button>
+    <button class="install-no" onclick="dismissInstall()">Later</button>
+  </div>
+  <div class="offline-badge" id="offlineBadge">📡 Offline mode</div>
+
+  <div class="toggle-bar">
+    <button class="btn-cal active" onclick="showView('cal')" aria-pressed="true">📆 Calendar 日历</button>
+    <button class="btn-conv" onclick="showView('conv')" aria-pressed="false">🔄 Converter 转换</button>
+  </div>
+
+  <!-- 👇 CALENDAR VIEW -->
+  <div id="viewCal">
+    <div class="panel">
+      <div class="today-card" id="todayCard">
+        <div class="tc-greg"></div>
+        <div class="tc-lunar"></div>
+        <div class="tc-events" id="todayEvents"></div>
+      </div>
+
+      <div class="search-box" id="searchBox">
+        <input type="search" id="searchInput" placeholder="🔍 Search festivals, notes, dates..." autocomplete="off" style="width:100%;padding:10px 12px;border:2px solid var(--md-outline);border-radius:var(--md-shape-sm);font-size:16px;box-sizing:border-box;background:var(--input-bg);color:var(--text);-webkit-appearance:none;font-family:inherit">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+
+      <div class="action-row">
+        <button style="background:var(--md-secondary)" onclick="toggleSearch()">🔍 Search</button>
+        <button style="background:var(--purple)" id="yearViewBtn" onclick="toggleYearView()">📆 Year View</button>
+        <button style="background:#e67e22" id="notifBtn" onclick="requestNotifPermission()">🔔 Notify</button>
+        <button style="background:#8e44ad" onclick="exportICS()">📤 Export</button>
+        <button id="stickyNoteBtn" style="background:var(--purple)" onclick="toggleStickyNotes()">📌 Notes</button>
+      </div>
+
+      <div class="cal-header">
+        <button onclick="changeMonth(-1)">‹</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button onclick="changeMonth(1)">›</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="today-btn" style="flex:1" onclick="jumpToday()">📍 Today 今天</button>
+      </div>
+
+      <table class="cal">
+        <thead><tr>
+          <th class="wn">WK</th><th class="sun">Sun</th><th>Mon</th><th>Tue</th>
+          <th>Wed</th><th>Thu</th><th>Fri</th><th class="sat">Sat</th>
+        </tr></thead>
+        <tbody id="calBody"></tbody>
+      </table>
+      <div id="multiMonthView" style="display:none"></div>
+
+      <div class="month-events" id="monthEvents">
+        <div class="me-header">🏮 This Month's Events</div>
+        <div class="me-body" id="monthEventsBody"></div>
+      </div>
+
+      <div class="legend" id="legend">
+        <span><i style="background:#e67e22"></i>Traditional</span>
+        <span><i style="background:#8e44ad"></i>Taoist</span>
+        <span><i style="background:#16a085"></i>My Notes</span>
+        <span><i style="background:#fbe9e7;border:1px solid #b03a2e"></i>Today</span>
+        <span>🌿 Solar Term</span>
+        <span>🌑 Moon Phase</span>
+        <span>🥬 Veg. Day</span>
+        <span>📜 Almanac</span>
+        <span><i style="background:var(--orange)"></i>Birthday</span>
+      </div>
+      <label class="auspicious-toggle" style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:12px;color:var(--text3);cursor:pointer">
+        <input type="checkbox" id="auspiciousDots"> 🎯 Show auspiciousness dots
+      </label>
+
+      <div id="yearViewContent"></div>
+      <div class="year-fest-panel" id="yearFestPanel"></div>
+      <div class="detail" id="detail"></div>
+    </div>
+  </div>
+
+  <!-- 👇 CONVERTER VIEW -->
+  <div id="viewConv" style="display:none">
+    <div class="panel">
+      <div class="conv-header">
+        <div class="conv-header-left">
+          <span class="conv-header-icon">🔄</span>
+          <div>
+            <div class="conv-title">Date Converter</div>
+            <div class="conv-subtitle">Standard ↔ Lunar 公历农历转换</div>
+          </div>
+        </div>
+        <button class="conv-today-btn" onclick="convertToday()">📌 Today</button>
+      </div>
+
+      <div class="conv-input-area">
+        <div class="conv-input-block">
+          <div class="conv-input-label">
+            <span>📍 Standard 公历</span>
+            <span class="conv-convert-dir">→</span>
+          </div>
+          <div class="conv-input-row">
+            <div class="sel-wrap"><select id="gYear"></select></div>
+            <span class="sep">/</span>
+            <div class="sel-wrap"><select id="gMonth"></select></div>
+            <span class="sep">/</span>
+            <div class="sel-wrap"><select id="gDay"></select></div>
+            <button class="conv-go-btn" onclick="convertG()" title="Convert to Lunar 转农历">→</button>
+          </div>
+        </div>
+
+        <div class="conv-divider"><span>↕</span></div>
+
+        <div class="conv-input-block">
+          <div class="conv-input-label">
+            <span>🌙 Lunar 农历</span>
+            <span class="conv-convert-dir">→</span>
+          </div>
+          <div class="conv-input-row">
+            <div class="sel-wrap"><select id="cYear"></select></div>
+            <span class="sep">年</span>
+            <div class="sel-wrap"><select id="cMonth"></select></div>
+            <span class="sep">月</span>
+            <div class="sel-wrap"><select id="cDay"></select></div>
+            <span class="sep">日</span>
+            <button class="conv-go-btn conv-go-lunar" onclick="convertC()" title="Convert to Standard 转公历">→</button>
+          </div>
+          <label class="leap-check"><input type="checkbox" id="cLeap"> 闰月 Leap month</label>
+        </div>
+      </div>
+
+      <div id="convResult" aria-live="polite">
+        <div class="conv-placeholder">
+          <span class="conv-placeholder-icon">🔄</span>
+          <span>Select a date or tap <strong>📌 Today</strong></span>
+        </div>
+      </div>
+
+      <div class="conv-collapse">
+        <div class="conv-collapse-header" onclick="toggleAgeSection()">
+          <span>📐 Age Calculator 年龄计算</span>
+          <span class="collapse-arrow" id="ageArrow">▾</span>
+        </div>
+        <div id="ageBody" class="conv-collapse-body">
+          <div class="asof-box">
+            <div class="asof-title">Calculate age as of / 计龄基准日</div>
+            <div class="asof-row">
+              <div class="sel-wrap"><select id="aYear"></select></div><span class="sep">Yr</span>
+              <div class="sel-wrap"><select id="aMonth"></select></div><span class="sep">Mo</span>
+              <div class="sel-wrap"><select id="aDay"></select></div><span class="sep">Day</span>
+            </div>
+            <div class="asof-today">
+              <input type="checkbox" id="aToday" checked>
+              <label for="aToday">Use today 使用今天</label>
+            </div>
+          </div>
+          <div id="ageContainer" aria-live="polite"></div>
+      
+      <!-- 👇 ZODIAC COMPATIBILITY SECTION -->
+      <div class="conv-collapse" style="margin-top:10px">
+        <div class="conv-collapse-header" onclick="var b=document.getElementById('zodiacBody'),a=document.getElementById('zodiacArrow');b.classList.toggle('open');a.classList.toggle('open');">
+          <span>💕 Zodiac Compatibility 生肖配对</span>
+          <span class="collapse-arrow" id="zodiacArrow">▾</span>
+        </div>
+        <div id="zodiacBody" class="conv-collapse-body">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <div class="sel-wrap" style="flex:1"><select id="zYear1" style="width:100%"></select></div>
+            <span style="font-size:20px">💕</span>
+            <div class="sel-wrap" style="flex:1"><select id="zYear2" style="width:100%"></select></div>
+            <button style="padding:6px 12px;background:var(--pink);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-family:inherit;font-size:12px" onclick="calcZodiacCompat()">🔮 Go</button>
+          </div>
+          <div id="zodiacResult" aria-live="polite">
+            <div class="conv-placeholder" style="padding:12px">
+              <span>Select two birth years to check compatibility 选择出生年份查看配对</span>
+            </div>
+          </div>
+        </div>
+      </div>
+          <div id="bdayFinder" style="display:none;margin-top:10px;padding:12px;background:var(--detail-bg);border-radius:var(--md-shape-sm)">
+            <div class="bday-title">🎂 Lunar Birthday 农历生日</div>
+            <div id="bdayResult" class="bday-result"></div>
+            <div style="margin-top:6px;display:flex;gap:4px">
+              <input id="birthdayName" placeholder="Name (e.g. Mom's birthday)" style="flex:1;padding:6px 8px;border:1px solid var(--md-outline);border-radius:var(--md-shape-xs);background:var(--input-bg);color:var(--text);font-size:12px;font-family:inherit">
+              <button id="birthdaySaveBtn" onclick="saveCurrentBirthday()" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-size:12px;font-family:inherit">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<script src="js/core.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>

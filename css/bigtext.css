@@ -1,0 +1,108 @@
+/* ── BIG TEXT (ACCESSIBILITY) ── */
+.big-text body{font-size:18px}
+.big-text .header h1{font-size:24px}
+.big-text .header h1 small{font-size:14px}
+.big-text .toggle-bar button{font-size:17px;padding:14px 12px;border-radius:var(--md-shape-md)}
+.big-text #viewConv,.big-text #viewCal{transition-duration:.35s}
+.big-text .conv-title{font-size:19px}
+.big-text .conv-subtitle{font-size:13px}
+.big-text .conv-today-btn{font-size:14px;padding:10px 18px;min-height:40px}
+.big-text .conv-input-row .sel-wrap select{font-size:17px;padding:12px 8px;min-height:48px}
+.big-text .conv-go-btn{font-size:17px;min-height:48px;min-width:48px}
+.big-text .conv-input-label{font-size:14px}
+.big-text .leap-check{font-size:14px}
+.big-text .conv-result-card{padding:20px}
+.big-text .crc-main{font-size:28px}
+.big-text .crc-sub{font-size:15px}
+.big-text .crc-chip{font-size:13px;padding:5px 12px}
+.big-text .crc-label{font-size:11px}
+.big-text .conv-collapse-header{font-size:15px;padding:10px 14px}
+.big-text .agebox .num{font-size:36px}
+.big-text .agebox .lbl{font-size:14px}
+.big-text .asof-title{font-size:14px}
+.big-text .asof-row .sel-wrap select{font-size:16px;padding:10px 6px}
+.big-text .cal-header button{font-size:24px;padding:10px 18px}
+.big-text .cal-title{font-size:18px}
+.big-text .cal-title small{font-size:13px}
+.big-text th{font-size:14px}
+.big-text td{height:76px;padding:4px}
+.big-text .g-day{font-size:20px}
+.big-text .c-day{font-size:12px}
+.big-text .st-badge{font-size:10px}
+.big-text .entry-preview{font-size:11px}
+.big-text .detail h3{font-size:17px}
+.big-text .detail .line{font-size:15px}
+.big-text .detail .ens{font-size:13px}
+.big-text .tag{font-size:15px;padding:8px 14px;border-radius:var(--md-shape-sm)}
+.big-text .tag small{font-size:12px}
+.big-text .entry-input{font-size:18px}
+.big-text .entry-save-btn{font-size:16px}
+.big-text .countdown-item{font-size:14px;padding:8px 12px;min-width:100px}
+.big-text .countdown-item .cd-num{font-size:16px}
+.big-text .countdown-item .cd-lbl{font-size:12px}
+.big-text .yf-month-title{font-size:16px}
+.big-text .yf-item{font-size:13px;padding:5px 10px;border-radius:var(--md-shape-xs)}
+.big-text .yf-item small{font-size:10px}
+.big-text .legend{font-size:14px}
+.big-text .conv-row .sep{font-size:14px}
+.big-text .asof-row .sel-wrap select{font-size:16px;padding:9px 4px}
+.big-text .asof-title{font-size:15px}
+.big-text .asof-today{font-size:15px}
+.big-text .top-actions button{font-size:20px;padding:8px 10px;min-width:44px;min-height:44px}
+.big-text .today-btn{font-size:18px;padding:16px;border-radius:var(--md-shape-md)}
+.big-text .detail-actions button{font-size:14px;padding:10px 14px;border-radius:var(--md-shape-sm)}
+.big-text .leap-row label{font-size:15px}
+.big-text .entry-section h4{font-size:15px}
+.big-text .entry-item .entry-text{font-size:16px}
+.big-text .no-entry{font-size:14px}
+.big-text .placeholder{font-size:16px;padding:32px}
+.big-text .err-box{font-size:15px;padding:16px;border-radius:var(--md-shape-sm)}
+.big-text .yf-header h3{font-size:19px}
+.big-text .yf-header h3 small{font-size:14px}
+.big-text .yf-item .yf-day{min-width:18px}
+.big-text .moon-icon{font-size:14px;bottom:3px}
+.big-text .asof-note{font-size:14px}
+.big-text .conv-row .lbl.lunar-lbl{min-width:58px}
+.big-text .conv-row .lbl{line-height:1.4}
+@media(max-width:360px){.big-text td{height:64px}.big-text .g-day{font-size:17px}.big-text .c-day{font-size:10px}.big-text .conv-row .lbl{font-size:11px;min-width:50px;padding:6px 4px}.big-text .conv-row .sel-wrap select{font-size:15px}.big-text .conv-btn{font-size:14px;padding:8px 8px}}
+/* ── TODAY CARD ── */
+.today-card{background:linear-gradient(135deg,var(--md-primary),#c0392b);color:#fff;border-radius:var(--md-shape-lg);padding:16px 18px;margin-bottom:12px;box-shadow:var(--md-elevation-2);position:relative;overflow:hidden}
+.today-card::after{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08)}
+.today-card::before{content:'';position:absolute;bottom:-30px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.05)}
+.tc-greg{font-size:17px;font-weight:500;letter-spacing:.2px;margin-bottom:2px}
+.tc-lunar{font-size:14px;opacity:.92;margin-bottom:6px;letter-spacing:.15px}
+.tc-lunar strong{font-weight:500}
+.tc-events{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:12px}
+.tc-events .tc-badge{background:rgba(255,255,255,.2);border-radius:var(--md-shape-sm);padding:4px 10px;display:inline-flex;align-items:center;gap:5px;letter-spacing:.15px;line-height:1.3;backdrop-filter:blur(4px)}
+.tc-events .tc-badge .tc-num{font-weight:700;font-size:13px}
+/* ── MONTH EVENTS LIST ── */
+.month-events{margin-top:12px;background:var(--detail-bg);border-radius:var(--md-shape-md);padding:12px 14px;border:1px solid var(--md-outline-variant)}
+.me-header{font-size:14px;font-weight:500;color:var(--md-primary);letter-spacing:.15px;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--md-outline-variant)}
+.me-body{display:flex;flex-direction:column;gap:4px}
+.me-item{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:var(--md-shape-sm);font-size:13px;cursor:pointer;transition:background .15s;line-height:1.4}
+.me-item:active{background:var(--md-surface-variant)}
+.me-day{font-weight:700;color:var(--md-primary);min-width:28px;text-align:center;font-size:15px}
+.me-label{flex:1;color:var(--text);font-weight:500}
+.me-label small{display:block;font-size:11px;color:var(--text3);font-weight:400}
+.me-badge{font-size:10px;padding:2px 8px;border-radius:var(--md-shape-xs);color:#fff;font-weight:500;letter-spacing:.1px;flex-shrink:0}
+.me-badge.me-trad{background:var(--orange)}
+.me-badge.me-tao{background:var(--purple)}
+.me-badge.me-st{background:var(--teal)}
+.me-badge.me-moon{background:var(--md-secondary)}
+.me-badge.me-veg{background:var(--green)}
+.big-text .today-card{padding:20px 22px}
+.big-text .tc-greg{font-size:21px}
+.big-text .tc-lunar{font-size:17px}
+.big-text .tc-events{font-size:14px;gap:8px}
+.big-text .tc-events .tc-badge{padding:6px 12px}
+.big-text .tc-events .tc-badge .tc-num{font-size:15px}
+.big-text .me-header{font-size:16px}
+.big-text .me-item{font-size:15px;padding:8px 10px}
+.big-text .me-day{font-size:17px;min-width:32px}
+.big-text .me-label small{font-size:12px}
+.big-text .me-badge{font-size:11px;padding:3px 10px}
+/* ── VEG BADGE ── */
+.veg-badge{position:absolute;bottom:2px;right:2px;font-size:10px;line-height:1;opacity:.8;z-index:1;padding:1px 3px;border-radius:var(--md-shape-xs)}
+.big-text .veg-badge{font-size:13px;bottom:3px;right:3px}
+.tag.veg{background:var(--green)}
+.tag.veg small{opacity:.9}

@@ -31,7 +31,7 @@ function buildResult(gs,ls,le,fc,fe,b,ly,alm){
     }
     festHtml+='</div>';
   }
-  var almHtml=alm?'<div class="alm-box crc-alm" onclick="this.classList.toggle(\'crc-alm-open\')"><div class="crc-alm-hdr">📜 Almanac 皇历 <span class="collapse-arrow">▾</span></div>'
+  var almHtml=alm?'<div class="alm-box crc-alm" data-alm-toggle><div class="crc-alm-hdr">📜 Almanac 皇历 <span class="collapse-arrow">▾</span></div>'
     +'<div class="crc-alm-body"><div class="alm-row"><div class="alm-suit">✅ '+alm.suit.join(", ")+' <small>'+alm.suit.map(function(a){return ACT_EN[a];}).join(", ")+'</small></div>'
     +'<div class="alm-avoid">❌ '+alm.avoid.join(", ")+' <small>'+alm.avoid.map(function(a){return ACT_EN[a];}).join(", ")+'</small></div></div></div></div>':'';
   return '<div class="conv-result-card">'
@@ -62,10 +62,20 @@ function updateAgeContainer(b,err,rs){
     ac.innerHTML="<div class='asof-note'>As of: "+rs+"</div><div class='agebox'><div><div class='num'>"+ch+"</div><div class='lbl'>虚岁 Chinese Age</div></div><div><div class='num'>"+we+"</div><div class='lbl'>周岁 Western Age</div></div></div>";
   }
 }
+function resetConvResult(msg){
+  LBD=null;LUNAR_BDAY=null;
+  document.getElementById("bdayFinder").style.display="none";
+  document.getElementById("convResult").innerHTML=msg;
+}
 function convertG(){
   var y=+SEL.gYear.value,m=+SEL.gMonth.value,d=+SEL.gDay.value;
-  var dt=new Date(y,m-1,d),l=s2l(dt);
-  if(!l){document.getElementById("convResult").innerHTML="<div class='err-box'>⚠️ Date is before the lunar calendar range (pre-1900).</div>";LBD=null;LUNAR_BDAY=null;document.getElementById("bdayFinder").style.display="none";return;}
+  var dt=new Date(y,m-1,d);
+  if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==d){
+    resetConvResult("<div class='err-box'>⚠️ Invalid Gregorian date / 无效公历日期.</div>");
+    return;
+  }
+  var l=s2l(dt);
+  if(!l){resetConvResult("<div class='err-box'>⚠️ Date is outside the supported calendar range (1900-2100).</div>");return;}
   var z=zod(l.year),f=fests(l),alm=auspiciousDay(y,m-1,d);
   document.getElementById("convResult").innerHTML=buildResult(
     MEN[m-1]+" "+d+", "+y,
@@ -77,9 +87,9 @@ function convertG(){
 function convertC(){
   var y=+SEL.cYear.value,m=+SEL.cMonth.value,d=+SEL.cDay.value,lp=document.getElementById("cLeap").checked;
   var res=document.getElementById("convResult");
-  if(lp&&llm(y)!==m){res.innerHTML="<div class='err-box'>⚠️ "+y+"年没有闰"+CM[m-1]+"月 / Year "+y+" has no leap "+CME[m-1]+".</div>";LBD=null;LUNAR_BDAY=null;document.getElementById("bdayFinder").style.display="none";return;}
+  if(lp&&llm(y)!==m){resetConvResult("<div class='err-box'>⚠️ "+y+"年没有闰"+CM[m-1]+"月 / Year "+y+" has no leap "+CME[m-1]+".</div>");return;}
   var dt=l2s(y,m,d,lp);
-  if(!dt){res.innerHTML="<div class='err-box'>⚠️ 无效农历日期 / Invalid lunar date.</div>";LBD=null;LUNAR_BDAY=null;document.getElementById("bdayFinder").style.display="none";return;}
+  if(!dt){resetConvResult("<div class='err-box'>⚠️ 无效农历日期 / Invalid lunar date.</div>");return;}
   var l=s2l(dt),z=zod(y),f=fests(l),gy=dt.getFullYear(),gm=dt.getMonth()+1,gd=dt.getDate();
   var alm=auspiciousDay(gy,gm-1,gd);
   res.innerHTML=buildResult(
@@ -129,38 +139,10 @@ var VD=new Date(),calRenderTimer=null;
 function renderCal(){
   if(calRenderTimer)cancelAnimationFrame(calRenderTimer);
   calRenderTimer=requestAnimationFrame(function(){
-    if(multiMonth){
-      document.getElementById("calBody").closest("table").style.display="none";
-      var mv=document.getElementById("multiMonthView");
-      mv.style.display="block";
-      mv.innerHTML=render3Months();
-      var wrap=mv.querySelector(".mm-wrap");
-      if(wrap){
-        var months=wrap.querySelectorAll(".mm-month");
-        if(months[1])document.getElementById("calTitle").innerHTML=months[1].querySelector(".mm-title").innerHTML;
-        setTimeout(function(){wrap.scrollLeft=0;},0);
-        wrap.addEventListener("scroll",function(){
-          var months=wrap.querySelectorAll(".mm-month");
-          var cx=wrap.scrollLeft+wrap.offsetWidth/2;
-          var best=0,bestDist=Infinity;
-          months.forEach(function(m,i){
-            var mr=m.getBoundingClientRect();
-            var mc=mr.left+mr.width/2;
-            var dist=Math.abs(mc-(wrap.getBoundingClientRect().left+wrap.offsetWidth/2));
-            if(dist<bestDist){bestDist=dist;best=i;}
-          });
-          var ym=months[best].querySelector(".mm-title").innerHTML;
-          document.getElementById("calTitle").innerHTML=ym;
-        });
-      }
-      document.getElementById("detail").classList.remove("show");
-      document.getElementById("detail").innerHTML="";
-    }else{
-      var tbl=document.getElementById("calBody").closest("table");
-      if(tbl)tbl.style.display="";
-      document.getElementById("multiMonthView").style.display="none";
-      _renderCalNow();
-    }
+    var tbl=document.getElementById("calBody").closest("table");
+    if(tbl)tbl.style.display="";
+    document.getElementById("multiMonthView").style.display="none";
+    _renderCalNow();
   });
 }
 function _renderCalNow(){
@@ -182,7 +164,7 @@ function _renderCalNow(){
     if(!l){
       var it=dt.toDateString()===today.toDateString();
       var cls=it?"today":"";
-      html+="<td class='"+cls+"' onclick='jumpToDate("+y+","+m+","+d+")' tabindex='0' role='button' aria-label='"+MEN[m]+" "+d+", "+y+"'>"
+      html+="<td class='"+cls+"' data-y='"+y+"' data-m='"+m+"' data-d='"+d+"' tabindex='0' role='button' aria-label='"+MEN[m]+" "+d+", "+y+"'>"
         +"<span class='g-day'>"+d+"</span></td>";
       cell++;
       if(cell%8===0){html+="</tr><tr><td class='wn'></td>";cell++;}
@@ -225,7 +207,7 @@ function _renderCalNow(){
     var stLbl=st?'<span class="st-badge">'+st.cn+'</span>':'';
     var a11yLabel=MEN[m]+" "+d+", "+y+" — "+lb.t+" "+(fs.length?fs.map(function(f){return f.cn;}).join(" "):"");
     // Popover on tap, detail on click
-    html+="<td class='"+cls+"' onclick='showPopover(this,"+y+","+m+","+d+",event)' ontouchstart='' tabindex='0' role='button' aria-label='"+esc(a11yLabel)+"'>"
+    html+="<td class='"+cls+"' data-y='"+y+"' data-m='"+m+"' data-d='"+d+"' tabindex='0' role='button' aria-label='"+esc(a11yLabel)+"'>"
       +dots+"<span class='g-day'>"+d+"</span>"+stLbl+"<span class='c-day"+(lb.f?" festival":"")+"'>"+lb.t+"</span>"
       +mi+pv+vb+"</td>";
     cell++;
@@ -276,7 +258,7 @@ function buildTodayCard(){
     eventsHtml+='<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--md-outline-variant)">';
     upBdays.forEach(function(b){
       var lbl=b.diff===0?"Today":b.diff===1?"Tomorrow":b.diff+"d";
-      eventsHtml+='<span class="tc-badge tc-bday" onclick="jumpToDate('+b.dt.getFullYear()+','+b.dt.getMonth()+','+b.dt.getDate()+')">🎂 '+lbl+' · '+esc(b.label)+'</span>';
+      eventsHtml+='<span class="tc-badge tc-bday" data-jump-y="'+b.dt.getFullYear()+'" data-jump-m="'+b.dt.getMonth()+'" data-jump-d="'+b.dt.getDate()+'">🎂 '+lbl+' · '+esc(b.label)+'</span>';
     });
     eventsHtml+='</div>';
   }
@@ -290,7 +272,7 @@ function buildTodayCard(){
     if(cfs.length){
       found++;
       var lbl=diff===0?"Today":diff===1?"Tomorrow":diff+"d";
-      eventsHtml+="<span class='tc-badge' onclick='jumpToDate("+cdt.getFullYear()+","+cdt.getMonth()+","+cdt.getDate()+")'><span class='tc-num'>"+lbl+"</span> "+cfs[0].cn+"</span>";
+      eventsHtml+="<span class='tc-badge' data-jump-y='"+cdt.getFullYear()+"' data-jump-m='"+cdt.getMonth()+"' data-jump-d='"+cdt.getDate()+"'><span class='tc-num'>"+lbl+"</span> "+cfs[0].cn+"</span>";
     }
   }
   // Check today's events too
@@ -320,10 +302,10 @@ function buildTodayCard(){
     eventsHtml+='<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;padding-top:4px;border-top:1px solid var(--md-outline-variant)">';
     if(nextFest){
       var flbl=nextFest.days+"d";
-      eventsHtml+='<span class="tc-badge" onclick="jumpToDate('+nextFest.dt.getFullYear()+','+nextFest.dt.getMonth()+','+nextFest.dt.getDate()+')">⏳ '+flbl+' · '+esc(nextFest.fest.cn)+'</span>';
+      eventsHtml+='<span class="tc-badge" data-jump-y="'+nextFest.dt.getFullYear()+'" data-jump-m="'+nextFest.dt.getMonth()+'" data-jump-d="'+nextFest.dt.getDate()+'">⏳ '+flbl+' · '+esc(nextFest.fest.cn)+'</span>';
     }
     if(nextST){
-      eventsHtml+='<span class="tc-badge" onclick="jumpToDate('+nextST.dt.getFullYear()+','+nextST.dt.getMonth()+','+nextST.dt.getDate()+')">🌿 '+nextST.days+"d · "+esc(nextST.term.cn)+'</span>';
+      eventsHtml+='<span class="tc-badge" data-jump-y="'+nextST.dt.getFullYear()+'" data-jump-m="'+nextST.dt.getMonth()+'" data-jump-d="'+nextST.dt.getDate()+'">🌿 '+nextST.days+"d · "+esc(nextST.term.cn)+'</span>';
     }
     eventsHtml+='</div>';
   }
@@ -347,23 +329,23 @@ function buildMonthEvents(y,m){
         var cls="me-badge "+(f.t==="trad"?"me-trad":"me-tao");
         rowHtml+="<span class='"+cls+"'>"+f.t+"</span> ";
       });
-      html+="<div class='me-item' onclick='jumpToDate("+y+","+m+","+d+")'>"
+      html+="<div class='me-item' data-jump-y='"+y+"' data-jump-m='"+m+"' data-jump-d='"+d+"'>"
         +"<span class='me-day'>"+d+"</span>"
         +"<span class='me-label'>"+fs.map(function(f){return f.cn;}).join("、")+"<small>"+fs.map(function(f){return f.en;}).join(", ")+"</small></span>"
         +rowHtml+"</div>";
     }else if(st){
-      html+="<div class='me-item' onclick='jumpToDate("+y+","+m+","+d+")'>"
+      html+="<div class='me-item' data-jump-y='"+y+"' data-jump-m='"+m+"' data-jump-d='"+d+"'>"
         +"<span class='me-day'>"+d+"</span>"
         +"<span class='me-label'>🌿 "+st.cn+"<small>"+st.en+"</small></span>"
         +"<span class='me-badge me-st'>Solar Term</span></div>";
     }else if(mV==="new"||mV==="full"){
       var mp=detailedMoonPhase(dt);
-      html+="<div class='me-item' onclick='jumpToDate("+y+","+m+","+d+")'>"
+      html+="<div class='me-item' data-jump-y='"+y+"' data-jump-m='"+m+"' data-jump-d='"+d+"'>"
         +"<span class='me-day'>"+d+"</span>"
         +"<span class='me-label'>"+mp.ico+" "+mp.cn+"<small>"+mp.en+"</small></span>"
         +"<span class='me-badge me-moon'>"+(mV==="new"?"New Moon":"Full Moon")+"</span></div>";
     }else if(vb){
-      html+="<div class='me-item' onclick='jumpToDate("+y+","+m+","+d+")'>"
+      html+="<div class='me-item' data-jump-y='"+y+"' data-jump-m='"+m+"' data-jump-d='"+d+"'>"
         +"<span class='me-day'>"+d+"</span>"
         +"<span class='me-label'>🥬 Vegetarian Observance<small>六斋日</small></span>"
         +"<span class='me-badge me-veg'>Veg</span></div>";
@@ -410,7 +392,7 @@ function jumpToDate(y,m,d){
   // Veg day
   if(vb)html+="<div class='line'>🥬 Vegetarian Observance Day (六斋日)</div>";
 
-  // Festivals
+  // Festivals with detail blurbs
   if(fs.length){
     html+="<div class='line' style='margin-top:8px'>";
     fs.forEach(function(f){
@@ -418,21 +400,35 @@ function jumpToDate(y,m,d){
       html+="<span class='"+cls+"'>"+esc(f.cn)+"<small>"+esc(f.en)+"</small></span> ";
     });
     html+="</div>";
+    // Show blurb for first festival if available
+    var fkey=l.month+"-"+l.day;
+    for(var fi=0;fi<fs.length;fi++){
+      var blurbKey=fkey+"-"+fi;
+      if(FD[blurbKey]){
+        html+="<div class='fest-blurb' data-blurb-key='"+blurbKey+"'>📖 <span class='blurb-text'>"+esc(FD[blurbKey])+"</span>"
+          +" <button class='blurb-toggle' data-blurb-key='"+blurbKey+"'>Show less</button></div>";
+        break;
+      }
+    }
   }
 
   // Almanac
   html+="<div class='alm-box'><strong>📜 Almanac 皇历</strong><br>"
     +"<span style='color:var(--green)'>✅ "+esc(alm.suit.join(", "))+"</span><br>"
     +"<span style='color:var(--md-error)'>❌ "+esc(alm.avoid.join(", "))+"</span><br>"
-    +"<span class='ens'>"+alm.suit.map(function(a){return ACT_EN[a];}).join(", ")+"</span></div>";
+    +"<span class='ens'>"+alm.suit.map(function(a){return ACT_EN[a];}).join(", ")+"</span>"
+    +"<div style='margin-top:6px;font-size:11px;color:var(--text4);border-top:1px solid var(--md-outline-variant);padding-top:4px'>⚠️ Simplified reference only. Consult a professional almanac (通书) for important decisions.</div></div>";
 
-  // Notes section
-  html+="<div class='entry-section'><h4>📝 My Notes / 我的备注"
-    +"<span class='entry-actions'><button onclick='addNoteEntry("+y+","+m+","+d+")'>➕ Add</button></span></h4>";
+  // Notes section with edit and color support
+  html+="<div class='entry-section' data-detail-y='"+y+"' data-detail-m='"+m+"' data-detail-d='"+d+"'><h4>📝 My Notes / 我的备注"
+    +"<span class='entry-actions'><button class='detail-add-note' data-y='"+y+"' data-m='"+m+"' data-d='"+d+"'>➕ Add</button></span></h4>";
   if(ns.length){
     ns.forEach(function(n){
-      html+="<div class='entry-item'><span class='entry-text'>"+esc(n.text)+"</span>"
-        +"<button class='entry-del' onclick='delNote("+y+","+m+","+d+","+n.id+");jumpToDate("+y+","+m+","+d+")' title='Delete note'>✕</button></div>";
+      var dotColor=n.color||NOTE_COLORS[0];
+      html+="<div class='entry-item'><span class='entry-dot' style='background:"+dotColor+"'></span>"
+        +"<span class='entry-text'>"+esc(n.text)+"</span>"
+        +"<button class='entry-edit' data-y='"+y+"' data-m='"+m+"' data-d='"+d+"' data-id='"+n.id+"' title='Edit note'>✎</button>"
+        +"<button class='entry-del' data-y='"+y+"' data-m='"+m+"' data-d='"+d+"' data-id='"+n.id+"' title='Delete note'>✕</button></div>";
     });
   }else{
     html+="<div class='no-entry'>No notes yet. Tap Add to create one.</div>";
@@ -441,21 +437,111 @@ function jumpToDate(y,m,d){
 
   // Actions
   html+="<div class='detail-actions'>"
-    +"<button class='share-btn' onclick='navigator.share?navigator.share({title:\"Lunar Calendar\",text:\""+esc(MEN[m])+" "+d+", "+y+"\"}):alert(\"Share not supported\")'>📤 Share</button>"
-    +"<button class='copy-btn' onclick='copyDetail()'>📋 Copy</button>"
-    +"<button id='detailCloseBtn' onclick='document.getElementById(\"detail\").classList.remove(\"show\");if(lastFocus&&typeof lastFocus.focus===\"function\")lastFocus.focus();'>✕ Close</button></div>";
+    +"<button class='share-btn' data-share-y='"+y+"' data-share-m='"+m+"' data-share-d='"+d+"'>📤 Share</button>"
+    +"<button class='copy-btn'>📋 Copy</button>"
+    +"<button class='detail-close-btn' data-focus='detail'>✕ Close</button></div>";
 
   el.innerHTML=html;
   el.classList.add("show");
+  // Restore lastFocus via dataset
+  if(lastFocus){
+    el.dataset.lastFocusId=lastFocus.id||"";
+    // Also store the outerHTML of the element with a unique selector
+    if(lastFocus.tagName){
+      var selector=lastFocus.tagName.toLowerCase();
+      if(lastFocus.id)selector="#"+lastFocus.id;
+      else if(lastFocus.name)selector+='[name="'+lastFocus.name+'"]';
+      else if(lastFocus.className&&typeof lastFocus.className==="string"){
+        var cls=lastFocus.className.trim().split(/\s+/)[0];
+        if(cls)selector+="."+cls;
+      }
+      el.dataset.lastFocusSelector=selector;
+    }
+  }
 }
 
 function addNoteEntry(y,m,d){
-  var t=prompt("Enter note / 输入备注:");
-  if(t&&t.trim()){
-    addNote(y,m,d,t.trim().slice(0,500));
-    jumpToDate(y,m,d);
-    renderCal();
+  // Create inline input in the detail panel instead of prompt()
+  var detail=document.getElementById("detail");
+  var entrySection=detail&&detail.querySelector(".entry-section");
+  if(!entrySection)return;
+  // Remove any existing inline editors
+  var existingRow=entrySection.querySelector(".entry-add-row");
+  if(existingRow)existingRow.remove();
+  var row=document.createElement("div");
+  row.className="entry-add-row";
+  var colorOptions='<div class="entry-color-row">';
+  for(var ci=0;ci<NOTE_COLORS.length;ci++){
+    var sel=ci===0?" checked":"";
+    colorOptions+='<label class="entry-color-lbl"><input type="radio" name="entryColor" value="'+NOTE_COLORS[ci]+'"'+sel+' style="accent-color:'+NOTE_COLORS[ci]+'"> <span style="background:'+NOTE_COLORS[ci]+';width:14px;height:14px;display:inline-block;border-radius:50%;vertical-align:middle"></span></label>';
   }
+  colorOptions+='</div>';
+  row.innerHTML="<textarea class='entry-input' placeholder='Enter note / 输入备注…' maxlength='500' rows='2'></textarea>"
+    +colorOptions
+    +"<button class='entry-save-btn'>Save</button>";
+  entrySection.insertBefore(row,entrySection.querySelector(".no-entry,.entry-item"));
+  var textarea=row.querySelector(".entry-input"),saveBtn=row.querySelector(".entry-save-btn");
+  textarea.focus();
+  function save(){
+    var t=textarea.value.trim();
+    if(t&&t.length){
+      var colorInput=row.querySelector('input[name="entryColor"]:checked');
+      var color=colorInput?colorInput.value:NOTE_COLORS[0];
+      addNote(y,m,d,t.slice(0,500),color);
+      jumpToDate(y,m,d);
+      renderCal();
+    }else{
+      showToast("⚠️ Note cannot be empty");
+    }
+  }
+  saveBtn.addEventListener("click",save);
+  textarea.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();save();}});
+  // Remove on Escape
+  textarea.addEventListener("keydown",function(e){if(e.key==="Escape")row.remove();});
+}
+
+function editNoteEntry(y,m,d,id){
+  var detail=document.getElementById("detail");
+  var entrySection=detail&&detail.querySelector(".entry-section");
+  if(!entrySection)return;
+  var note=getNote(y,m,d,id);
+  if(!note)return;
+  // Remove existing inline editors
+  var existingRow=entrySection.querySelector(".entry-add-row");
+  if(existingRow)existingRow.remove();
+  var row=document.createElement("div");
+  row.className="entry-add-row";
+  var colorOptions='<div class="entry-color-row">';
+  for(var ci=0;ci<NOTE_COLORS.length;ci++){
+    var sel=NOTE_COLORS[ci]===note.color?" checked":"";
+    colorOptions+='<label class="entry-color-lbl"><input type="radio" name="editColor" value="'+NOTE_COLORS[ci]+'"'+sel+' style="accent-color:'+NOTE_COLORS[ci]+'"> <span style="background:'+NOTE_COLORS[ci]+';width:14px;height:14px;display:inline-block;border-radius:50%;vertical-align:middle"></span></label>';
+  }
+  colorOptions+='</div>';
+  row.innerHTML="<textarea class='entry-input' placeholder='Edit note…' maxlength='500' rows='2'>"+esc(note.text)+"</textarea>"
+    +colorOptions
+    +"<button class='entry-save-btn'>💾 Update</button>"
+    +"<button class='entry-cancel-btn'>✕ Cancel</button>";
+  entrySection.insertBefore(row,entrySection.querySelector(".no-entry,.entry-item"));
+  var textarea=row.querySelector(".entry-input"),saveBtn=row.querySelector(".entry-save-btn");
+  var cancelBtn=row.querySelector(".entry-cancel-btn");
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length,textarea.value.length);
+  function save(){
+    var t=textarea.value.trim();
+    if(t&&t.length){
+      var colorInput=row.querySelector('input[name="editColor"]:checked');
+      var color=colorInput?colorInput.value:note.color||NOTE_COLORS[0];
+      updateNote(y,m,d,id,t.slice(0,500),color);
+      jumpToDate(y,m,d);
+      renderCal();
+    }else{
+      showToast("⚠️ Note cannot be empty");
+    }
+  }
+  saveBtn.addEventListener("click",save);
+  cancelBtn.addEventListener("click",function(){jumpToDate(y,m,d);});
+  textarea.addEventListener("keydown",function(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();save();}});
+  textarea.addEventListener("keydown",function(e){if(e.key==="Escape")jumpToDate(y,m,d);});
 }
 
 function copyDetail(){
@@ -517,7 +603,7 @@ function toggleYearView(){
   }
 }
 function renderYearViewHTML(y){
-  var html="<div class='year-grid-wrap'><div class='year-grid-header'><div class='yg-title'>📆 "+y+"<small>Full Year · 全年</small></div><button style='background:var(--purple);color:#fff;border:none;border-radius:var(--md-shape-sm);padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:500' onclick='showYearFestivals()'>🏮 Festivals</button></div>";
+  var html="<div class='year-grid-wrap'><div class='year-grid-header'><div class='yg-title'>📆 "+y+"<small>Full Year · 全年</small></div><button class='btn-year-festivals' style='background:var(--purple);color:#fff;border:none;border-radius:var(--md-shape-sm);padding:6px 12px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:500'>🏮 Festivals</button></div>";
   html+="<div class='year-grid'>";
   var dow=["Su","Mo","Tu","We","Th","Fr","Sa"];
   for(var m=0;m<12;m++){
@@ -525,7 +611,7 @@ function renderYearViewHTML(y){
     var midDate=new Date(y,m,15),midL=s2l(midDate);
     var ganZhi=midL?gzy(midL.year):"";
     var today=new Date();
-    html+="<div class='ymonth' onclick='jumpToMonth("+y+","+m+")'><div class='ymonth-title'>"+MSH[m]+"</div><div class='ymonth-sub'>"+ganZhi+"</div><div class='ym-days'>";
+    html+="<div class='ymonth' data-jump-y='"+y+"' data-jump-m='"+m+"'><div class='ymonth-title'>"+MSH[m]+"</div><div class='ymonth-sub'>"+ganZhi+"</div><div class='ym-days'>";
     for(var w=0;w<7;w++)html+="<div class='ym-dw'>"+dow[w]+"</div>";
     for(var p=0;p<firstDOW;p++)html+="<div class='ym-d ym-empty'></div>";
     for(var d=1;d<=days;d++){
@@ -559,7 +645,7 @@ function showYearFestivals(){
 
 /* ── Year Festivals (used by year view) ── */
 function buildYearFestivalsHTML(y){
-  var html="<div class='yf-header'><h3>📆 "+y+" Year Overview<small>Festivals, Solar Terms &amp; Events</small></h3><button onclick='document.getElementById(\"yearFestPanel\").classList.remove(\"show\")'>✕</button></div>";
+  var html="<div class='yf-header'><h3>📆 "+y+" Year Overview<small>Festivals, Solar Terms &amp; Events</small></h3><button class='yf-close'>✕</button></div>";
   for(var m=0;m<12;m++){
     var days=new Date(y,m+1,0).getDate(),mh="<div class='yf-month'><div class='yf-month-title'>"+MEN[m]+"</div><div class='yf-items'>";
     for(var d=1;d<=days;d++){
@@ -569,10 +655,10 @@ function buildYearFestivalsHTML(y){
       if(fs.length||st){
         fs.forEach(function(f){
           var cls=f.t==="trad"?"yf-trad":"yf-tao";
-          mh+="<span class='yf-item "+cls+"' tabindex='0' role='button' onclick='jumpToDate("+y+","+m+","+d+");document.getElementById(\"yearFestPanel\").classList.remove(\"show\");toggleYearView()'><span class='yf-day'>"+esc(d)+"</span>"+esc(f.cn)+"<small>"+esc(f.en)+"</small></span>";
+          mh+="<span class='yf-item "+cls+"' tabindex='0' role='button' data-yf-y='"+y+"' data-yf-m='"+m+"' data-yf-d='"+d+"'><span class='yf-day'>"+esc(d)+"</span>"+esc(f.cn)+"<small>"+esc(f.en)+"</small></span>";
         });
         if(st){
-          mh+="<span class='yf-item yf-st' tabindex='0' role='button' onclick='jumpToDate("+y+","+m+","+d+");document.getElementById(\"yearFestPanel\").classList.remove(\"show\");toggleYearView()'><span class='yf-day'>"+esc(d)+"</span>🌿 "+esc(st.cn)+"<small>"+esc(st.en)+"</small></span>";
+          mh+="<span class='yf-item yf-st' tabindex='0' role='button' data-yf-y='"+y+"' data-yf-m='"+m+"' data-yf-d='"+d+"'><span class='yf-day'>"+esc(d)+"</span>🌿 "+esc(st.cn)+"<small>"+esc(st.en)+"</small></span>";
         }
       }
     }
@@ -586,15 +672,12 @@ function $(id){return document.getElementById(id);}
 
 /* ── THEME ── */
 var bigTextOn=false;
-function toggleTheme(){
-  document.body.classList.toggle("dark");
-  var isDark=document.body.classList.contains("dark");
-  localStorage.setItem("lunarcal_theme",isDark?"dark":"light");
-}
 function toggleBigText(){
   bigTextOn=!bigTextOn;
   document.body.classList.toggle("big-text",bigTextOn);
   localStorage.setItem("lunarcal_bigtext",bigTextOn?"1":"0");
+  var btn=document.getElementById("bigTextBtn");
+  if(btn)btn.setAttribute("aria-pressed",bigTextOn?"true":"false");
 }
 
 /* ── LUNAR BIRTHDAY ── */
@@ -606,9 +689,10 @@ function setLunarBirthday(l){
   if(!l){bf.style.display="none";return;}
   bf.style.display="block";
   var z=zod(l.year);
-  var next=l2s(VD.getFullYear(),l.month,l.day,l.isLeap);
-  if(!next||next<VD)next=l2s(VD.getFullYear()+1,l.month,l.day,l.isLeap);
-  var diff=next?Math.ceil((next-VD)/86400000):"?";
+  var today=donly(new Date());
+  var next=l2s(today.getFullYear(),l.month,l.day,l.isLeap);
+  if(!next||donly(next)<today)next=l2s(today.getFullYear()+1,l.month,l.day,l.isLeap);
+  var diff=next?Math.ceil((donly(next)-today)/86400000):"?";
   document.getElementById("bdayResult").innerHTML="🎂 <b>"+(l.isLeap?"闰":"")+l.year+"年 "+CM[l.month-1]+"月 "+CD[l.day-1]+"</b> · "+z.cn+" "+z.en
     +"<br>Next: "+(next?MEN[next.getMonth()]+" "+next.getDate()+", "+next.getFullYear()+" ("+diff+" days)":"N/A");
 }
@@ -649,7 +733,7 @@ function showPopover(el,y,m,d,evt){
   html+="<div class='popover-moon'>"+mp.ico+" "+esc(mp.cn)+"</div>";
   html+="<div class='popover-alm'><span class='alm-s'>"+alm.suit.slice(0,4).join("/")+"</span><span class='alm-a'>"+alm.avoid.slice(0,4).join("/")+"</span></div>";
   var pop=document.createElement("div");pop.id="datePopover";pop.className="date-popover";pop.innerHTML=html;
-  pop.onclick=function(){pop.remove();jumpToDate(y,m,d);};
+  pop.addEventListener("click",function(){pop.remove();jumpToDate(y,m,d);});
   document.body.appendChild(pop);
   // Position near the cell
   var rect=el.getBoundingClientRect();
@@ -659,7 +743,17 @@ function showPopover(el,y,m,d,evt){
   pop.style.top=top+"px";pop.style.left=left+"px";
   pop.classList.add("show");
   // Auto-hide after 3s
-  popoverTimer=setTimeout(function(){if(pop.parentNode)pop.remove();},3000);
+  popoverTimer=setTimeout(function(){
+    if(pop.parentNode){
+      pop.remove();
+      // Announce to screen readers that popover dismissed
+      var ann=document.getElementById("popoverAnnounce");
+      if(ann)ann.textContent="Popover closed";
+    }
+  },3000);
+  // Announce popover to screen readers
+  var ann=document.getElementById("popoverAnnounce");
+  if(ann)ann.textContent="Quick preview shown for "+MEN[m]+" "+d+". Press Escape to close.";
 }
 // Click outside popover closes it
 document.addEventListener("click",function(e){
@@ -680,12 +774,6 @@ function toggleStickyNotes(){
 var THEMES=["light","dark","sepia","forest","ocean","midnight"];
 var THEME_ICONS=["☀️","🌓","📜","🌲","🌊","🌙"];
 var THEME_LABELS=["Light","Dark","Sepia","Forest","Ocean","Midnight"];
-function cycleTheme(){
-  var current=getTheme();
-  var idx=THEMES.indexOf(current);
-  idx=(idx+1)%THEMES.length;
-  setTheme(THEMES[idx]);
-}
 function getTheme(){
   for(var i=0;i<THEMES.length;i++){
     if(document.body.classList.contains(THEMES[i]))return THEMES[i];
@@ -700,13 +788,9 @@ function setTheme(t){
   var colors={"light":"#b03a2e","dark":"#201a19","sepia":"#8b6914","forest":"#1b5e20","ocean":"#006a7f","midnight":"#0d0d1a"};
   var mc=document.getElementById("themeColor");
   if(mc)mc.content=colors[t]||colors.light;
-  // Update button icon
-  var btn=document.getElementById("themeBtn");
-  if(btn){
-    var idx=THEMES.indexOf(t);
-    btn.textContent=THEME_ICONS[idx];
-    btn.title="Theme: "+THEME_LABELS[idx];
-  }
+  // Sync dropdown
+  var sel=document.getElementById("themeSelect");
+  if(sel)sel.value=t;
 }
 
 /* ── DECADE JUMP SCROLLER ── */
@@ -717,14 +801,14 @@ function toggleDecadeScroller(){
   overlay.className="decade-overlay";
   var currentY=VD.getFullYear();
   var startY=Math.floor(currentY/10)*10;
-  var html="<div class='decade-panel'><div class='decade-header'>Jump to Year <span class='decade-close' onclick='document.querySelector(\".decade-overlay\").remove();decadeScroller=null'>✕</span></div><div class='decade-grid'>";
+  var html="<div class='decade-panel'><div class='decade-header'>Jump to Year <span class='decade-close' data-decade-close>✕</span></div><div class='decade-grid'>";
   for(var y=1920;y<=2120;y+=1){
     var decade=Math.floor(y/10)*10;
     var inDecade=Math.abs(y-currentY)<=5;
     var cls="decade-year";
     if(y===currentY)cls+=" current";
     if(y%10===0)cls+=" decade-start";
-    html+="<div class='"+cls+"' onclick='jumpDecadeYear("+y+")'>"+y+"</div>";
+    html+="<div class='"+cls+"' data-decade-year='"+y+"'>"+y+"</div>";
   }
   html+="</div><div class='decade-legend'>Decade: <span id='decadeLabel'>"+startY+"-"+(startY+9)+"</span></div></div>";
   overlay.innerHTML=html;
@@ -749,7 +833,8 @@ function calcZodiacCompat(){
   var y1=+document.getElementById("zYear1").value;
   var y2=+document.getElementById("zYear2").value;
   var z1=zod(y1),z2=zod(y2);
-  var i1=(y1-4)%12,i2=(y2-4)%12;
+  var i1=(y1-4)%12;if(i1<0)i1+=12;
+  var i2=(y2-4)%12;if(i2<0)i2+=12;
   var compat=zodiacCompat(i1,i2);
   var html="<div class='zodiac-result'>";
   html+="<div class='zodiac-pair'><span class='zodiac-badge' style='background:"+z1.ex+"'>"+z1.cn+"<small>"+z1.en+"</small></span>";
@@ -758,13 +843,193 @@ function calcZodiacCompat(){
   html+="<div class='zodiac-rate'><div class='zodiac-bar'><div style='width:"+compat.rate+"%'></div></div><span>"+compat.rate+"%</span></div>";
   html+="<div class='zodiac-note'>"+compat.note+"</div>";
   var elemMatch=z1.ee===z2.ee;
-  if(elemMatch)html+="<div class='zodiac-elem'>⚡ Both are <b>"+z1.ee+" (",z1.ec+")</b> element! <span style='color:var(--orange)'>Double strength!</span></div>";
+  if(elemMatch)html+="<div class='zodiac-elem'>⚡ Both are <b>"+z1.ee+" ("+z1.ec+")</b> element! <span style='color:var(--orange)'>Double strength!</span></div>";
   else html+="<div class='zodiac-elem'>Elements: "+z1.ee+" ("+z1.ec+") vs "+z2.ee+" ("+z2.ec+")</div>";
   html+="</div>";
   document.getElementById("zodiacResult").innerHTML=html;
 }
 
 /* ── TOAST ── */
+/* ── EVENT DELEGATION: Almanac toggle in converter result ── */
+document.addEventListener("click",function(e){
+  var alm=e.target.closest("[data-alm-toggle]");
+  if(alm)alm.classList.toggle("crc-alm-open");
+});
+
+/* ── EVENT DELEGATION: Calendar body handler ── */
+document.addEventListener("DOMContentLoaded",function(){
+  var calBody=document.getElementById("calBody");
+  if(calBody){
+    calBody.addEventListener("click",function(e){
+      var td=e.target.closest("td");
+      if(!td)return;
+      var y=td.dataset.y,m=td.dataset.m,d=td.dataset.d;
+      if(y===undefined||m===undefined||d===undefined)return;
+      y=+y;m=+m;d=+d;
+        if(e.detail === 0 || !td.querySelector(".c-day")){
+          jumpToDate(y,m,d);
+        }else{
+          showPopover(td,y,m,d,e);
+        }
+      });
+    }
+
+  /* ── EVENT DELEGATION: Detail panel ── */
+  var detail=document.getElementById("detail");
+  if(detail){
+    detail.addEventListener("click",function(e){
+      var target=e.target;
+
+      // Close button
+      if(target.classList.contains("detail-close-btn")){
+        detail.classList.remove("show");
+        var focusId=detail.dataset.lastFocusId;
+        var focusEl=null;
+        if(focusId){
+          focusEl=document.getElementById(focusId);
+        }
+        if(!focusEl){
+          var sel=detail.dataset.lastFocusSelector;
+          if(sel)try{focusEl=document.querySelector(sel);}catch(e){/* ignore */}
+        }
+        if(focusEl&&typeof focusEl.focus==="function")focusEl.focus();
+        return;
+      }
+
+      // Copy button
+      if(target.classList.contains("copy-btn")){
+        copyDetail();
+        return;
+      }
+
+      // Share button
+      if(target.classList.contains("share-btn")){
+        var y=+target.dataset.shareY,m=+target.dataset.shareM,d=+target.dataset.shareD;
+        var label=MEN[m]+" "+d+", "+y;
+        if(navigator.share){
+          navigator.share({title:"Lunar Calendar",text:label}).catch(function(){});
+        }else{
+          showToast("⚠️ Share not supported in this browser");
+        }
+        return;
+      }
+
+      // Add note
+      if(target.classList.contains("detail-add-note")){
+        var y=+target.dataset.y,m=+target.dataset.m,d=+target.dataset.d;
+        addNoteEntry(y,m,d);
+        return;
+      }
+
+      // Delete note
+      if(target.classList.contains("entry-del")){
+        var y=+target.dataset.y,m=+target.dataset.m,d=+target.dataset.d,id=+target.dataset.id;
+        delNote(y,m,d,id);
+        jumpToDate(y,m,d);
+        return;
+      }
+
+      // Edit note
+      if(target.classList.contains("entry-edit")){
+        var y=+target.dataset.y,m=+target.dataset.m,d=+target.dataset.d,id=+target.dataset.id;
+        editNoteEntry(y,m,d,id);
+        return;
+      }
+
+      // Blurb toggle
+      if(target.classList.contains("blurb-toggle")){
+        var key=target.dataset.blurbKey;
+        var blurbEl=target.closest(".fest-blurb");
+        if(blurbEl)blurbEl.classList.toggle("blurb-collapsed");
+        target.textContent=blurbEl.classList.contains("blurb-collapsed")?"Show more":"Show less";
+        return;
+      }
+    });
+  }
+
+  /* ── EVENT DELEGATION: Backup/restore/notify/export ── */
+  document.addEventListener("click",function(e){
+    if(e.target.closest("[data-backup-export]")){
+      exportBackup();
+      var menu=document.getElementById("overflowMenu");
+      if(menu)menu.classList.remove("show");
+      return;
+    }
+    if(e.target.closest("[data-backup-import]")){
+      var input=document.getElementById("backupFileInput");
+      if(input)input.click();
+      var menu=document.getElementById("overflowMenu");
+      if(menu)menu.classList.remove("show");
+      return;
+    }
+    if(e.target.closest("[data-notif-btn]")){
+      requestNotifPermission();
+      return;
+    }
+    if(e.target.closest("[data-export-ics]")){
+      exportICS();
+      return;
+    }
+  });
+  document.addEventListener("change",function(e){
+    if(e.target.id==="backupFileInput"&&e.target.files.length){
+      importBackup(e.target.files[0]);
+      e.target.value="";
+    }
+  });
+
+  /* ── EVENT DELEGATION: Month events / jump items ── */
+  document.addEventListener("click",function(e){
+    var jumpEl=e.target.closest("[data-jump-y]");
+    if(!jumpEl)return;
+    var y=+jumpEl.dataset.jumpY,m=+jumpEl.dataset.jumpM,d=jumpEl.dataset.jumpD;
+    if(d!==undefined){
+      // Has a day → jump to date
+      jumpToDate(y,m,+d);
+    }else{
+      // No day → jump to month (ymonth grid)
+      jumpToMonth(y,m);
+    }
+  });
+
+  /* ── EVENT DELEGATION: Year festival panel close ── */
+  document.addEventListener("click",function(e){
+    if(e.target.closest(".yf-close")){
+      document.getElementById("yearFestPanel").classList.remove("show");
+    }
+    var yf=e.target.closest("[data-yf-y]");
+    if(yf){
+      var y=+yf.dataset.yfY,m=+yf.dataset.yfM,d=+yf.dataset.yfD;
+      document.getElementById("yearFestPanel").classList.remove("show");
+      // If year view is open, close it
+      if(yearViewOn)setTimeout(function(){toggleYearView();},50);
+      jumpToDate(y,m,d);
+    }
+  });
+
+  /* ── EVENT DELEGATION: Year festivals button in grid ── */
+  document.addEventListener("click",function(e){
+    if(e.target.closest(".btn-year-festivals")){
+      showYearFestivals();
+    }
+  });
+
+  /* ── EVENT DELEGATION: Decade scroller ── */
+  document.addEventListener("click",function(e){
+    var closeBtn=e.target.closest("[data-decade-close]");
+    if(closeBtn){
+      var overlay=closeBtn.closest(".decade-overlay");
+      if(overlay){overlay.remove();decadeScroller=null;}
+      return;
+    }
+    var yearEl=e.target.closest("[data-decade-year]");
+    if(yearEl){
+      var y=+yearEl.dataset.decadeYear;
+      jumpDecadeYear(y);
+    }
+  });
+});
+
 function showToast(msg){
   var t=document.getElementById("toast");
   if(!t)return;

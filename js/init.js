@@ -72,7 +72,7 @@ function init(){
   SEL.aMonth.value=now.getMonth()+1;
   SEL.aDay.value=now.getDate();
 
-  // Restore theme — use new multi-theme system
+  // Restore theme
   var savedTheme=localStorage.getItem("lunarcal_theme");
   if(savedTheme&&["dark","sepia","forest","ocean","midnight"].indexOf(savedTheme)>=0){
     setTheme(savedTheme);
@@ -82,7 +82,14 @@ function init(){
     setTheme("light");
   }
   var savedBt=localStorage.getItem("lunarcal_bigtext");
-  if(savedBt==="1"){bigTextOn=true;document.body.classList.add("big-text");}
+  if(savedBt==="1"){bigTextOn=true;document.body.classList.add("big-text");
+    var btBtn=document.getElementById("bigTextBtn");
+    if(btBtn)btBtn.setAttribute("aria-pressed","true");
+  }
+
+  // Wire install button
+  var ib=document.getElementById("installBtn");
+  if(ib)ib.addEventListener("click",installPWA);
 
   // Check install dismissed
   if(localStorage.getItem("lunarcal_install_dismissed")==="1"){

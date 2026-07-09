@@ -255,8 +255,7 @@ td.wn:active{transform:none}
 
 /* ── NEW FEATURES: SEARCH, ALMANAC, MULTI-MONTH, ETC ── */
 /* Search */
-.search-box{display:none;margin:0 12px 10px;position:relative}
-.search-box.show{display:block}
+.search-box{display:block;margin:0 12px 10px;position:relative}
 .search-box input{width:100%;padding:10px 14px;border:2px solid var(--md-outline);border-radius:var(--md-shape-sm);font-size:16px;background:var(--input-bg);color:var(--text);-webkit-appearance:none;box-sizing:border-box;font-family:inherit;transition:border-color .2s}
 .search-box input:focus{outline:none;border-color:var(--md-primary)}
 .search-results{display:none;background:var(--surface);border:1px solid var(--md-outline-variant);border-radius:var(--md-shape-sm);margin-top:4px;max-height:260px;overflow-y:auto;box-shadow:var(--md-elevation-2);position:absolute;width:100%;z-index:10}
@@ -300,6 +299,16 @@ td.wn:active{transform:none}
 .action-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
 .action-row button{flex:1 1 auto;padding:12px 10px;border:none;border-radius:var(--md-shape-sm);font-size:12px;cursor:pointer;font-weight:500;font-family:inherit;letter-spacing:.15px;min-height:44px;color:#fff;-webkit-appearance:none;transition:background .2s,box-shadow .2s,transform .1s;line-height:1.3;min-width:0}.action-row button:hover{box-shadow:var(--md-elevation-1)}
 .action-row button:active{transform:scale(.96)}
+
+/* ── OVERFLOW MENU ── */
+.overflow-wrap{position:relative;flex:0 0 auto}
+.btn-overflow{flex:0 0 auto;padding:12px 16px;border:none;border-radius:var(--md-shape-sm);font-size:18px;cursor:pointer;font-weight:500;font-family:inherit;letter-spacing:.15px;min-height:44px;color:#fff;-webkit-appearance:none;transition:background .2s;line-height:1;background:var(--text4)}.btn-overflow:hover{box-shadow:var(--md-elevation-1)}.btn-overflow:active{transform:scale(.96)}
+.overflow-wrap .overflow-menu{display:none;position:absolute;right:0;bottom:calc(100% + 4px);z-index:20;background:var(--surface);border:1px solid var(--md-outline-variant);border-radius:var(--md-shape-sm);box-shadow:var(--md-elevation-3);overflow:hidden;min-width:140px;animation:fadeSlide .15s ease}
+.overflow-wrap .overflow-menu.show{display:block}
+.overflow-wrap .overflow-menu button{display:flex;align-items:center;gap:8px;width:100%;padding:12px 16px;border:none;background:transparent;color:var(--text);font-size:13px;cursor:pointer;font-family:inherit;font-weight:400;transition:background .15s;text-align:left;min-height:44px;-webkit-appearance:none}
+.overflow-wrap .overflow-menu button:hover{background:var(--md-surface-variant)}
+.overflow-wrap .overflow-menu button:active{background:var(--md-primary-container)}
+
 :root{--pink:#d87a7a}
 .dark{--pink:#c87070}
 
@@ -369,6 +378,18 @@ td.mixed{background:rgba(241,196,15,.06)}
 .zodiac-note{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5}
 .zodiac-elem{font-size:11px;color:var(--text3);margin-top:4px;padding-top:4px;border-top:1px solid var(--md-outline-variant)}
 
+/* ── BUTTON MODIFIERS (replaces inline style=) ── */
+.btn-search{background:var(--md-secondary)}
+.btn-yearview{background:var(--purple)}
+.btn-yearview.btn-secondary{background:var(--md-secondary)}
+.btn-notif{background:#e67e22}
+.btn-export{background:#8e44ad}
+.btn-notes{background:var(--purple)}
+.btn-zodiac-go{padding:6px 12px;background:var(--pink);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-family:inherit;font-size:12px}
+.btn-zodiac-go:active{transform:scale(.93)}
+.btn-bday-save{padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-size:12px;font-family:inherit}
+.btn-bday-save:active{transform:scale(.93)}
+
 /* ── BIRTHDAY SAVE BUTTON ── */
 .bday-save-btn{margin-top:6px;padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-size:11px;font-family:inherit;font-weight:500}
 
@@ -376,3 +397,24 @@ td.mixed{background:rgba(241,196,15,.06)}
 .dark .decade-panel{background:var(--surface)}
 .dark .date-popover{background:var(--surface)}
 .dark .zodiac-bar div{background:linear-gradient(90deg,#60d080,#40c8a0)}
+
+/* ── FEATURE 8: FESTIVAL BLURB ── */
+.fest-blurb{font-size:11px;color:var(--text3);line-height:1.6;margin:6px 0;padding:8px 10px;background:var(--md-surface-variant);border-radius:var(--md-shape-sm);border-left:3px solid var(--orange)}
+.fest-blurb .blurb-text{display:inline}
+.fest-blurb.blurb-collapsed .blurb-text{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fest-blurb .blurb-toggle{background:none;border:none;color:var(--md-primary);cursor:pointer;font-size:11px;padding:0 4px;font-family:inherit;text-decoration:underline}
+.fest-blurb .blurb-toggle:hover{opacity:.8}
+
+/* ── FEATURE 9: NOTE EDIT & COLOR PICKER ── */
+.entry-item .entry-dot{display:inline-block;width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.entry-item .entry-edit{background:none;border:none;color:var(--teal);font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;min-width:32px;min-height:32px;display:flex;align-items:center;justify-content:center;-webkit-appearance:none}
+.entry-item .entry-edit:hover{opacity:.7}
+.entry-cancel-btn{padding:10px 12px;background:transparent;color:var(--text3);border:1px solid var(--md-outline);border-radius:var(--md-shape-sm);font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit;min-height:44px;-webkit-appearance:none}
+.entry-color-row{display:flex;gap:4px;padding:4px 0;flex-wrap:wrap;align-items:center}
+.entry-color-lbl{display:inline-flex;align-items:center;gap:2px;cursor:pointer;font-size:0}
+.entry-color-lbl input[type=radio]{width:16px;height:16px;margin:0;cursor:pointer}
+.entry-color-lbl input[type=radio]:checked+span{outline:2px solid var(--md-primary);outline-offset:2px}
+
+/* ── FEATURE 10: BACKUP / RESTORE BUTTONS ── */
+.btn-backup{background:var(--md-secondary)}
+.btn-restore{background:var(--md-secondary)}

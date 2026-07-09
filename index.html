@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Lunar Calendar">
 <meta name="theme-color" content="#b03a2e" id="themeColor">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" href="lunar.svg" type="image/svg+xml" sizes="512x512">
 <link rel="apple-touch-icon" href="lunar.svg" sizes="512x512">
@@ -21,10 +20,19 @@
 <div class="container">
   <div class="header">
     <h1>🌙 Lunar Calendar <small>Lunisolar Date Conversion &amp; Auspicious Day</small></h1>
-    <div class="top-actions">
-      <button onclick="toggleBigText()" title="Larger text" aria-label="Toggle larger text">Aa</button>
-      <button id="themeBtn" onclick="cycleTheme()" title="Theme: Light" aria-label="Cycle theme">☀️</button>
+        <div class="top-actions">
+    <button id="bigTextBtn" onclick="toggleBigText()" title="Larger text" aria-label="Toggle larger text" aria-pressed="false">Aa</button>
+    <div class="theme-picker-wrap">
+      <select id="themeSelect" onchange="setTheme(this.value)" aria-label="Select theme">
+        <option value="light">☀️ Light</option>
+        <option value="dark">🌓 Dark</option>
+        <option value="sepia">📜 Sepia</option>
+        <option value="forest">🌲 Forest</option>
+        <option value="ocean">🌊 Ocean</option>
+        <option value="midnight">🌙 Midnight</option>
+      </select>
     </div>
+  </div>
   </div>
   <div class="install-banner" id="installBanner">
     <p>📲 Install <b>Lunar Calendar</b> for offline use and quick access!</p>
@@ -48,16 +56,22 @@
       </div>
 
       <div class="search-box" id="searchBox">
-        <input type="search" id="searchInput" placeholder="🔍 Search festivals, notes, dates..." autocomplete="off" style="width:100%;padding:10px 12px;border:2px solid var(--md-outline);border-radius:var(--md-shape-sm);font-size:16px;box-sizing:border-box;background:var(--input-bg);color:var(--text);-webkit-appearance:none;font-family:inherit">
+        <input type="search" id="searchInput" placeholder="🔍 Search festivals, solar terms, dates…" autocomplete="off" style="width:100%;padding:10px 12px;border:2px solid var(--md-outline);border-radius:var(--md-shape-sm);font-size:16px;box-sizing:border-box;background:var(--input-bg);color:var(--text);-webkit-appearance:none;font-family:inherit">
         <div class="search-results" id="searchResults"></div>
       </div>
 
       <div class="action-row">
-        <button style="background:var(--md-secondary)" onclick="toggleSearch()">🔍 Search</button>
-        <button style="background:var(--purple)" id="yearViewBtn" onclick="toggleYearView()">📆 Year View</button>
-        <button style="background:#e67e22" id="notifBtn" onclick="requestNotifPermission()">🔔 Notify</button>
-        <button style="background:#8e44ad" onclick="exportICS()">📤 Export</button>
-        <button id="stickyNoteBtn" style="background:var(--purple)" onclick="toggleStickyNotes()">📌 Notes</button>
+        <button class="btn-yearview" id="yearViewBtn" onclick="toggleYearView()">📆 Year View</button>
+        <button class="btn-notes" id="stickyNoteBtn" onclick="toggleStickyNotes()">📌 Notes</button>
+        <div class="overflow-wrap">
+          <button class="btn-overflow" id="overflowBtn" onclick="toggleOverflow()" aria-label="More actions" aria-expanded="false">⋮</button>
+          <div class="overflow-menu" id="overflowMenu">
+            <button class="btn-notif" data-notif-btn>🔔 Notify</button>
+            <button class="btn-export" data-export-ics>📤 Export IC</button>
+            <button class="btn-backup" data-backup-export>💾 Backup</button>
+            <button class="btn-restore" data-backup-import>📂 Restore</button>
+          </div>
+        </div>
       </div>
 
       <div class="cal-header">
@@ -192,7 +206,7 @@
             <div class="sel-wrap" style="flex:1"><select id="zYear1" style="width:100%"></select></div>
             <span style="font-size:20px">💕</span>
             <div class="sel-wrap" style="flex:1"><select id="zYear2" style="width:100%"></select></div>
-            <button style="padding:6px 12px;background:var(--pink);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-family:inherit;font-size:12px" onclick="calcZodiacCompat()">🔮 Go</button>
+            <button class="btn-zodiac-go" onclick="calcZodiacCompat()">🔮 Go</button>
           </div>
           <div id="zodiacResult" aria-live="polite">
             <div class="conv-placeholder" style="padding:12px">
@@ -206,7 +220,7 @@
             <div id="bdayResult" class="bday-result"></div>
             <div style="margin-top:6px;display:flex;gap:4px">
               <input id="birthdayName" placeholder="Name (e.g. Mom's birthday)" style="flex:1;padding:6px 8px;border:1px solid var(--md-outline);border-radius:var(--md-shape-xs);background:var(--input-bg);color:var(--text);font-size:12px;font-family:inherit">
-              <button id="birthdaySaveBtn" onclick="saveCurrentBirthday()" style="padding:6px 12px;background:var(--orange);color:#fff;border:none;border-radius:var(--md-shape-xs);cursor:pointer;font-size:12px;font-family:inherit">Save</button>
+              <button id="birthdaySaveBtn" class="btn-bday-save" onclick="saveCurrentBirthday()">Save</button>
             </div>
           </div>
         </div>
@@ -216,10 +230,30 @@
 </div>
 
 <div class="toast" id="toast" role="alert" aria-live="polite"></div>
+<input type="file" id="backupFileInput" accept=".json" style="display:none">
+<div id="popoverAnnounce" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <script src="js/core.js"></script>
-<script src="js/app.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/init.js"></script>
+<script>
+  /* ── OVERFLOW MENU ── */
+  function toggleOverflow(){
+    var menu=document.getElementById("overflowMenu");
+    if(!menu)return;
+    menu.classList.toggle("show");
+    var btn=document.getElementById("overflowBtn");
+    if(btn)btn.setAttribute("aria-expanded",menu.classList.contains("show")?"true":"false");
+  }
+  document.addEventListener("click",function(e){
+    var wrap=document.querySelector(".overflow-wrap");
+    if(wrap&&!wrap.contains(e.target)){
+      var menu=document.getElementById("overflowMenu");
+      if(menu)menu.classList.remove("show");
+      var btn=document.getElementById("overflowBtn");
+      if(btn)btn.setAttribute("aria-expanded","false");
+    }
+  });
+</script>
 </body>
 </html>
